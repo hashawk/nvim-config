@@ -1,36 +1,20 @@
 --[[
 
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
+==================================================
+==================================================
+ _   _    _    ____  _   _    _ __        ___  __
+| | | |  / \  / ___|| | | |  / \\ \      / / |/ /
+| |_| | / _ \ \___ \| |_| | / _ \\ \ /\ / /| ' /
+|  _  |/ ___ \ ___) |  _  |/ ___ \\ V  V / | . \
+|_| |_/_/   \_\____/|_| |_/_/   \_\\_/\_/  |_|\_\
 
-What is Kickstart?
+             linux • cli • systems
+                brewedkernel
 
-  Kickstart.nvim is *not* a distribution.
+==================================================
+==================================================
 
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
+To get up and running:
 
     If you don't know anything about Lua, I recommend taking some time to read through
     a guide. One possible example which will only take 10-15 minutes:
@@ -40,21 +24,6 @@ What is Kickstart?
     reference for how Neovim integrates Lua.
     - :help lua-guide
     - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
 
   Next, run AND READ `:help`.
     This will open up a help window with some basic information
@@ -66,22 +35,6 @@ Kickstart Guide:
     MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
     which is very useful when you're not exactly sure of what you're looking for.
 
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
 -- Set <space> as the leader key
@@ -102,7 +55,7 @@ vim.g.have_nerd_font = false
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.o.relativenumber = true
+vim.o.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -217,6 +170,10 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
+
+-- Scroll and center
+vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'Scroll down and center' })
+vim.keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'Scroll up and center' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -600,9 +557,12 @@ require('lazy').setup({
       --  See `:help lsp-config` for information about keys and how to configure
       ---@type table<string, vim.lsp.Config>
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
+        clangd = {},
+        gopls = {},
+        pyright = {},
+        yamlls = {},
+        jsonls = {},
+        marksman = {},
         -- rust_analyzer = {},
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -653,6 +613,14 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         -- You can add other tools here that you want Mason to install
+        'ruff', -- Python linter + formatter
+        'goimports', -- Go import organizer
+        'golangci-lint', -- Go linter
+        'clang-format', -- C formatter
+        'yamllint', -- YAML linter
+        'jsonlint', -- JSON linter
+        'markdownlint', -- Markdown linter
+        'prettier', -- JSON/YAML/Markdown formatter
       })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -695,6 +663,12 @@ require('lazy').setup({
         end
       end,
       formatters_by_ft = {
+        python = { 'ruff_format' },
+        go = { 'goimports' },
+        c = { 'clang-format' },
+        json = { 'prettier' },
+        yaml = { 'prettier' },
+        markdown = { 'prettier' },
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
@@ -797,26 +771,16 @@ require('lazy').setup({
       signature = { enabled = true },
     },
   },
-
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+  {
+    'rebelot/kanagawa.nvim',
+    priority = 1000,
     config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
+      require('kanagawa').setup {
+        commentStyle = { italic = false },
+        keywordStyle = { italic = false },
       }
-
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      -- Variants: 'kanagawa-wave' (default dark), 'kanagawa-dragon' (darker), 'kanagawa-lotus' (light)
+      vim.cmd.colorscheme 'kanagawa-wave'
     end,
   },
 
@@ -866,58 +830,36 @@ require('lazy').setup({
       --  Check out: https://github.com/nvim-mini/mini.nvim
     end,
   },
-
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
-    lazy = false,
+    branch = 'master',
     build = ':TSUpdate',
-    branch = 'main',
-    -- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
-    config = function()
-      -- ensure basic parser are installed
-      local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
-      require('nvim-treesitter').install(parsers)
-
-      ---@param buf integer
-      ---@param language string
-      local function treesitter_try_attach(buf, language)
-        -- check if parser exists and load it
-        if not vim.treesitter.language.add(language) then return end
-        -- enables syntax highlighting and other treesitter features
-        vim.treesitter.start(buf, language)
-
-        -- enables treesitter based folds
-        -- for more info on folds see `:help folds`
-        -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-        -- vim.wo.foldmethod = 'expr'
-
-        -- enables treesitter based indentation
-        vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-      end
-
-      local available_parsers = require('nvim-treesitter').get_available()
-      vim.api.nvim_create_autocmd('FileType', {
-        callback = function(args)
-          local buf, filetype = args.buf, args.match
-
-          local language = vim.treesitter.language.get_lang(filetype)
-          if not language then return end
-
-          local installed_parsers = require('nvim-treesitter').get_installed 'parsers'
-
-          if vim.tbl_contains(installed_parsers, language) then
-            -- enable the parser if it is installed
-            treesitter_try_attach(buf, language)
-          elseif vim.tbl_contains(available_parsers, language) then
-            -- if a parser is available in `nvim-treesitter` auto install it, and enable it after the installation is done
-            require('nvim-treesitter').install(language):await(function() treesitter_try_attach(buf, language) end)
-          else
-            -- try to enable treesitter features in case the parser exists but is not available from `nvim-treesitter`
-            treesitter_try_attach(buf, language)
-          end
-        end,
-      })
-    end,
+    main = 'nvim-treesitter.configs',
+    opts = {
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+        -- your languages:
+        'python',
+        'go',
+        'gomod',
+        'gosum',
+        'json',
+        'yaml',
+      },
+      auto_install = true,
+      highlight = { enable = true },
+      indent = { enable = true },
+    },
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -931,7 +873,7 @@ require('lazy').setup({
   --
   -- require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommended keymaps
